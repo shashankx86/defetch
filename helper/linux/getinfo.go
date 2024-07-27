@@ -557,12 +557,57 @@ func getSoftwareInfo() helper.SoftwareInfo {
 	osDetails := getOSDetails()
 	desktopEnvironment := getDesktopEnvironment()
 	windowManager := getWindowManager()
+	wmTheme := getWMTheme()
+	gtkTheme := getGTKTheme()
+	iconsTheme := getIconsTheme()
+	font := getFont()
 
 	return helper.SoftwareInfo{
 		OSDetails:          osDetails,
 		DesktopEnvironment: desktopEnvironment,
 		WindowManager:      windowManager,
+		WMTheme:            wmTheme,
+		GTKTheme:           gtkTheme,
+		IconsTheme:         iconsTheme,
+		Font:               font,
 	}
+}
+
+// Helper function to get Window Manager theme
+func getWMTheme() string {
+	// Assuming `gsettings` or `xfconf-query` can be used, this is dependent on the environment
+	output, err := exec.Command("gsettings", "get", "org.gnome.desktop.wm.preferences", "theme").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// Helper function to get GTK theme
+func getGTKTheme() string {
+	output, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// Helper function to get Icons theme
+func getIconsTheme() string {
+	output, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// Helper function to get the font used in the system
+func getFont() string {
+	output, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "font-name").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	return strings.TrimSpace(string(output))
 }
 
 // Helper function to get OS details

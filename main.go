@@ -98,4 +98,8 @@ func main() {
 	fmt.Printf("Operating System: %s\n", sysInfo.Software.OSDetails)
 	fmt.Printf("Desktop Environment: %s\n", sysInfo.Software.DesktopEnvironment)
 	fmt.Printf("Window Manager: %s\n", sysInfo.Software.WindowManager)
+	fmt.Printf("WM Theme: %s\n", sysInfo.Software.WMTheme)
+	fmt.Printf("GTK Theme: %s\n", sysInfo.Software.GTKTheme)
+	fmt.Printf("Icons Theme: %s\n", sysInfo.Software.IconsTheme)
+	fmt.Printf("Font: %s\n", sysInfo.Software.Font)
 }

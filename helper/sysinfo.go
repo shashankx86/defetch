@@ -106,4 +106,8 @@ type SoftwareInfo struct {
 	OSDetails          string // Operating System details (Distro name or Windows edition)
 	DesktopEnvironment string // Desktop Environment name and version
 	WindowManager      string // Window Manager name and version
+	WMTheme            string // Window Manager theme
+	GTKTheme           string // GTK theme
+	IconsTheme         string // Icons theme
+	Font               string // Font used in the system
 }
