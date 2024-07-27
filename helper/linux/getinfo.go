@@ -62,6 +62,12 @@ func GetLinuxInfo() helper.SysInfo {
 	// Network Information
 	networkInfo := getNetworkInfo()
 
+	// Battery Information
+	batteryInfo := getBatteryInfo()
+
+	// Peripherals Information
+	peripheralsInfo := getPeripheralsInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -79,6 +85,8 @@ func GetLinuxInfo() helper.SysInfo {
 		Memory:        memoryInfo,
 		Storage:       storageInfo,
 		Network:       networkInfo,
+		Battery:       batteryInfo,
+		Peripherals:   peripheralsInfo,
 	}
 }
 
@@ -445,4 +453,97 @@ func getNetworkInfo() []helper.NetworkInfo {
 	}
 
 	return networks
+}
+
+// Helper function to get Battery information
+func getBatteryInfo() helper.BatteryInfo {
+	// Placeholder values, actual implementation will depend on available battery data source
+	status := "Unknown"
+	capacity := "Unknown"
+	percentage := "Unknown"
+	manufacturer := "Unknown"
+	model := "Unknown"
+
+	// Retrieve battery information from system files (example: /sys/class/power_supply/BAT0/)
+	batteryPath := "/sys/class/power_supply/BAT0/"
+	statusBytes, err := os.ReadFile(batteryPath + "status")
+	if err == nil {
+		status = strings.TrimSpace(string(statusBytes))
+	}
+	capacityBytes, err := os.ReadFile(batteryPath + "energy_full")
+	if err == nil {
+		capacity = strings.TrimSpace(string(capacityBytes)) + " µWh"
+	}
+	percentageBytes, err := os.ReadFile(batteryPath + "capacity")
+	if err == nil {
+		percentage = strings.TrimSpace(string(percentageBytes)) + "%"
+	}
+	manufacturerBytes, err := os.ReadFile(batteryPath + "manufacturer")
+	if err == nil {
+		manufacturer = strings.TrimSpace(string(manufacturerBytes))
+	}
+	modelBytes, err := os.ReadFile(batteryPath + "model_name")
+	if err == nil {
+		model = strings.TrimSpace(string(modelBytes))
+	}
+
+	return helper.BatteryInfo{
+		Status:       status,
+		Capacity:     capacity,
+		Percentage:   percentage,
+		Manufacturer: manufacturer,
+		Model:        model,
+	}
+}
+
+// Helper function to get Peripherals information
+func getPeripheralsInfo() helper.PeripheralInfo {
+	var peripherals helper.PeripheralInfo
+
+	// Connected devices (using xinput for example)
+	connectedDevicesOutput, err := exec.Command("xinput", "--list", "--name-only").Output()
+	if err == nil {
+		peripherals.ConnectedDevices = strings.Split(strings.TrimSpace(string(connectedDevicesOutput)), "\n")
+	}
+
+	// USB devices
+	usbDevicesOutput, err := exec.Command("lsusb").Output()
+	if err == nil {
+		usbLines := strings.Split(strings.TrimSpace(string(usbDevicesOutput)), "\n")
+		for _, line := range usbLines {
+			parts := strings.Fields(line)
+			if len(parts) > 5 {
+				vendorID := parts[5][:4]
+				productID := parts[5][5:]
+				vendor := parts[6]
+				name := strings.Join(parts[7:], " ")
+				peripherals.USBDevices = append(peripherals.USBDevices, helper.USBDeviceInfo{
+					Name:      name,
+					Vendor:    vendor,
+					ProductID: productID,
+					VendorID:  vendorID,
+				})
+			}
+		}
+	}
+
+	// Audio devices (using aplay -l for example)
+	audioDevicesOutput, err := exec.Command("aplay", "-l").Output()
+	if err == nil {
+		audioLines := strings.Split(strings.TrimSpace(string(audioDevicesOutput)), "\n")
+		for _, line := range audioLines {
+			if strings.Contains(line, "card") {
+				peripherals.AudioDevices = append(peripherals.AudioDevices, line)
+			}
+		}
+	}
+
+	// Printer details (using lpstat -p for example)
+	printerOutput, err := exec.Command("lpstat", "-p").Output()
+	if err == nil {
+		printerLines := strings.Split(strings.TrimSpace(string(printerOutput)), "\n")
+		peripherals.PrinterDetails = printerLines
+	}
+
+	return peripherals
 }

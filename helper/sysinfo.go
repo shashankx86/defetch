@@ -17,6 +17,8 @@ type SysInfo struct {
 	Memory        MemoryInfo
 	Storage       []StorageInfo
 	Network       []NetworkInfo
+	Battery       BatteryInfo
+	Peripherals   PeripheralInfo
 }
 
 type CPUInfo struct {
@@ -75,4 +77,26 @@ type NetworkInfo struct {
 	Speed          string
 	Active         bool
 	DefaultGateway string
+}
+
+type BatteryInfo struct {
+	Status       string // Charging or discharging status
+	Capacity     string // Battery capacity
+	Percentage   string // Battery percentage remaining
+	Manufacturer string // Battery manufacturer
+	Model        string // Battery model
+}
+
+type PeripheralInfo struct {
+	ConnectedDevices []string        // List of connected devices (e.g., mouse, keyboard, monitors)
+	USBDevices       []USBDeviceInfo // List of USB devices
+	AudioDevices     []string        // List of audio devices
+	PrinterDetails   []string        // List of printer details
+}
+
+type USBDeviceInfo struct {
+	Name      string // Name of the USB device
+	Vendor    string // Vendor name
+	ProductID string // Product ID
+	VendorID  string // Vendor ID
 }

@@ -65,4 +65,32 @@ func main() {
 		fmt.Printf("Active: %t\n", network.Active)
 		fmt.Printf("Default Gateway: %s\n", network.DefaultGateway)
 	}
+
+	// Battery Information
+	fmt.Printf("Battery Status: %s\n", sysInfo.Battery.Status)
+	fmt.Printf("Battery Capacity: %s\n", sysInfo.Battery.Capacity)
+	fmt.Printf("Battery Percentage: %s\n", sysInfo.Battery.Percentage)
+	fmt.Printf("Battery Manufacturer: %s\n", sysInfo.Battery.Manufacturer)
+	fmt.Printf("Battery Model: %s\n", sysInfo.Battery.Model)
+
+	// Peripherals Information
+	fmt.Println("Connected Devices:")
+	for _, device := range sysInfo.Peripherals.ConnectedDevices {
+		fmt.Printf("- %s\n", device)
+	}
+
+	fmt.Println("USB Devices:")
+	for _, usbDevice := range sysInfo.Peripherals.USBDevices {
+		fmt.Printf("- Name: %s, Vendor: %s, Product ID: %s, Vendor ID: %s\n", usbDevice.Name, usbDevice.Vendor, usbDevice.ProductID, usbDevice.VendorID)
+	}
+
+	fmt.Println("Audio Devices:")
+	for _, audioDevice := range sysInfo.Peripherals.AudioDevices {
+		fmt.Printf("- %s\n", audioDevice)
+	}
+
+	fmt.Println("Printer Details:")
+	for _, printer := range sysInfo.Peripherals.PrinterDetails {
+		fmt.Printf("- %s\n", printer)
+	}
 }
