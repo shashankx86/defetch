@@ -50,6 +50,12 @@ func GetLinuxInfo() helper.SysInfo {
 	// GPU Information
 	gpuInfo := getGPUInfo()
 
+	// Motherboard Information
+	motherboardInfo := getMotherboardInfo()
+
+	// Memory Information
+	memoryInfo := getMemoryInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -63,6 +69,8 @@ func GetLinuxInfo() helper.SysInfo {
 		Uptime:        uptimeStr,
 		CPU:           cpuInfo,
 		GPU:           gpuInfo,
+		Motherboard:   motherboardInfo,
+		Memory:        memoryInfo,
 	}
 }
 
@@ -213,5 +221,97 @@ func getGPUInfo() helper.GPUInfo {
 		ModelName:     modelName,
 		DriverVersion: driverVersion,
 		MemorySize:    memorySize,
+	}
+}
+
+// Helper function to get Motherboard information
+func getMotherboardInfo() helper.MotherboardInfo {
+	var manufacturer, model, biosVersion, serialNumber string
+
+	// Use dmidecode command to get motherboard info
+	output, err := exec.Command("dmidecode", "-t", "baseboard").Output()
+	if err != nil {
+		panic("Cannot execute dmidecode command")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "Manufacturer:") {
+			manufacturer = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.Contains(line, "Product Name:") {
+			model = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.Contains(line, "Version:") {
+			biosVersion = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.Contains(line, "Serial Number:") {
+			serialNumber = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+	}
+
+	return helper.MotherboardInfo{
+		Manufacturer: manufacturer,
+		Model:        model,
+		BIOSVersion:  biosVersion,
+		SerialNumber: serialNumber,
+	}
+}
+
+// Helper function to get Memory information
+func getMemoryInfo() helper.MemoryInfo {
+	var totalSize, usedSize, freeSize string
+	var slots []helper.MemorySlotInfo
+
+	// Use free command to get memory usage
+	freeOutput, err := exec.Command("free", "-h").Output()
+	if err != nil {
+		panic("Cannot execute free command")
+	}
+
+	freeLines := strings.Split(string(freeOutput), "\n")
+	for _, line := range freeLines {
+		if strings.HasPrefix(line, "Mem:") {
+			parts := strings.Fields(line)
+			totalSize = parts[1]
+			usedSize = parts[2]
+			freeSize = parts[3]
+		}
+	}
+
+	// Use dmidecode command to get memory slot information
+	dmidecodeOutput, err := exec.Command("dmidecode", "-t", "memory").Output()
+	if err != nil {
+		panic("Cannot execute dmidecode command")
+	}
+
+	dmidecodeLines := strings.Split(string(dmidecodeOutput), "\n")
+	var currentSlot helper.MemorySlotInfo
+	for _, line := range dmidecodeLines {
+		if strings.HasPrefix(line, "Size:") {
+			if currentSlot.Size != "" {
+				slots = append(slots, currentSlot)
+			}
+			currentSlot = helper.MemorySlotInfo{Size: strings.TrimSpace(strings.Split(line, ":")[1])}
+		}
+		if strings.HasPrefix(line, "Form Factor:") {
+			currentSlot.FormFactor = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.HasPrefix(line, "Type:") {
+			currentSlot.Type = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.HasPrefix(line, "Speed:") {
+			currentSlot.Speed = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+	}
+	if currentSlot.Size != "" {
+		slots = append(slots, currentSlot)
+	}
+
+	return helper.MemoryInfo{
+		TotalSize: totalSize,
+		UsedSize:  usedSize,
+		FreeSize:  freeSize,
+		Slots:     slots,
 	}
 }

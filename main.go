@@ -30,4 +30,16 @@ func main() {
 	fmt.Printf("GPU Model: %s\n", sysInfo.GPU.ModelName)
 	fmt.Printf("GPU Driver Version: %s\n", sysInfo.GPU.DriverVersion)
 	fmt.Printf("GPU Memory Size: %s\n", sysInfo.GPU.MemorySize)
+
+	// Motherboard Information
+	fmt.Printf("Motherboard Manufacturer: %s\n", sysInfo.Motherboard.Manufacturer)
+	fmt.Printf("Motherboard Model: %s\n", sysInfo.Motherboard.Model)
+	fmt.Printf("BIOS/UEFI Version: %s\n", sysInfo.Motherboard.BIOSVersion)
+	fmt.Printf("Motherboard Serial Number: %s\n", sysInfo.Motherboard.SerialNumber)
+
+	// Memory Information
+	fmt.Printf("Total Memory: %s\n", sysInfo.Memory.TotalSize)
+	fmt.Printf("Used Memory: %s\n", sysInfo.Memory.UsedSize)
+	fmt.Printf("Free Memory: %s\n", sysInfo.Memory.FreeSize)
+	fmt.Printf("Memory Slots: %v\n", sysInfo.Memory.Slots)
 }

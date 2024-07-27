@@ -13,6 +13,8 @@ type SysInfo struct {
 	Uptime        string
 	CPU           CPUInfo
 	GPU           GPUInfo
+	Motherboard   MotherboardInfo
+	Memory        MemoryInfo
 }
 
 type CPUInfo struct {
@@ -29,4 +31,25 @@ type GPUInfo struct {
 	ModelName     string
 	DriverVersion string
 	MemorySize    string
+}
+
+type MotherboardInfo struct {
+	Manufacturer string
+	Model        string
+	BIOSVersion  string
+	SerialNumber string
+}
+
+type MemoryInfo struct {
+	TotalSize string
+	UsedSize  string
+	FreeSize  string
+	Slots     []MemorySlotInfo
+}
+
+type MemorySlotInfo struct {
+	Size       string
+	FormFactor string
+	Type       string
+	Speed      string
 }
