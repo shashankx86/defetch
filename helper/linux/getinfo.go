@@ -56,6 +56,9 @@ func GetLinuxInfo() helper.SysInfo {
 	// Memory Information
 	memoryInfo := getMemoryInfo()
 
+	// Storage Information
+	storageInfo := getStorageInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -71,6 +74,7 @@ func GetLinuxInfo() helper.SysInfo {
 		GPU:           gpuInfo,
 		Motherboard:   motherboardInfo,
 		Memory:        memoryInfo,
+		Storage:       storageInfo,
 	}
 }
 
@@ -226,29 +230,10 @@ func getGPUInfo() helper.GPUInfo {
 
 // Helper function to get Motherboard information
 func getMotherboardInfo() helper.MotherboardInfo {
-	var manufacturer, model, biosVersion, serialNumber string
-
-	// Use dmidecode command to get motherboard info
-	output, err := exec.Command("dmidecode", "-t", "baseboard").Output()
-	if err != nil {
-		panic("Cannot execute dmidecode command")
-	}
-
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "Manufacturer:") {
-			manufacturer = strings.TrimSpace(strings.Split(line, ":")[1])
-		}
-		if strings.Contains(line, "Product Name:") {
-			model = strings.TrimSpace(strings.Split(line, ":")[1])
-		}
-		if strings.Contains(line, "Version:") {
-			biosVersion = strings.TrimSpace(strings.Split(line, ":")[1])
-		}
-		if strings.Contains(line, "Serial Number:") {
-			serialNumber = strings.TrimSpace(strings.Split(line, ":")[1])
-		}
-	}
+	manufacturer := readSysFileOrFallback("/sys/class/dmi/id/board_vendor", "dmidecode -s baseboard-manufacturer")
+	model := readSysFileOrFallback("/sys/class/dmi/id/board_name", "dmidecode -s baseboard-product-name")
+	biosVersion := readSysFileOrFallback("/sys/class/dmi/id/bios_version", "dmidecode -s bios-version")
+	serialNumber := readSysFileOrFallback("/sys/class/dmi/id/board_serial", "dmidecode -s baseboard-serial-number")
 
 	return helper.MotherboardInfo{
 		Manufacturer: manufacturer,
@@ -258,54 +243,65 @@ func getMotherboardInfo() helper.MotherboardInfo {
 	}
 }
 
+// parseSize converts a memory size string (e.g., "4096 kB") into an integer value in kilobytes.
+func parseSize(sizeStr string) int64 {
+	sizeParts := strings.Fields(sizeStr)
+	size, err := strconv.ParseInt(sizeParts[0], 10, 64)
+	if err != nil {
+		return 0
+	}
+	return size
+}
+
 // Helper function to get Memory information
 func getMemoryInfo() helper.MemoryInfo {
 	var totalSize, usedSize, freeSize string
 	var slots []helper.MemorySlotInfo
 
-	// Use free command to get memory usage
-	freeOutput, err := exec.Command("free", "-h").Output()
+	// Use /proc/meminfo to get memory usage
+	meminfoOutput, err := os.ReadFile("/proc/meminfo")
 	if err != nil {
-		panic("Cannot execute free command")
+		panic("Cannot read /proc/meminfo")
 	}
 
-	freeLines := strings.Split(string(freeOutput), "\n")
-	for _, line := range freeLines {
-		if strings.HasPrefix(line, "Mem:") {
-			parts := strings.Fields(line)
-			totalSize = parts[1]
-			usedSize = parts[2]
-			freeSize = parts[3]
+	lines := strings.Split(string(meminfoOutput), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "MemTotal:") {
+			totalSize = strings.TrimSpace(strings.Fields(line)[1]) + " kB"
+		}
+		if strings.HasPrefix(line, "MemFree:") {
+			freeSize = strings.TrimSpace(strings.Fields(line)[1]) + " kB"
 		}
 	}
 
-	// Use dmidecode command to get memory slot information
+	// Calculate used size
+	usedSize = fmt.Sprintf("%d kB", parseSize(totalSize)-parseSize(freeSize))
+
+	// Use dmidecode as a fallback for memory slot information if sysfs is unavailable
 	dmidecodeOutput, err := exec.Command("dmidecode", "-t", "memory").Output()
-	if err != nil {
-		panic("Cannot execute dmidecode command")
-	}
-
-	dmidecodeLines := strings.Split(string(dmidecodeOutput), "\n")
-	var currentSlot helper.MemorySlotInfo
-	for _, line := range dmidecodeLines {
-		if strings.HasPrefix(line, "Size:") {
-			if currentSlot.Size != "" {
-				slots = append(slots, currentSlot)
+	if err == nil {
+		dmidecodeLines := strings.Split(string(dmidecodeOutput), "\n")
+		var currentSlot helper.MemorySlotInfo
+		for _, line := range dmidecodeLines {
+			if strings.HasPrefix(line, "Size:") {
+				if currentSlot.Size != "" {
+					slots = append(slots, currentSlot)
+				}
+				currentSlot = helper.MemorySlotInfo{Size: strings.TrimSpace(strings.Split(line, ":")[1])}
 			}
-			currentSlot = helper.MemorySlotInfo{Size: strings.TrimSpace(strings.Split(line, ":")[1])}
+			if strings.HasPrefix(line, "Form Factor:") {
+				currentSlot.FormFactor = strings.TrimSpace(strings.Split(line, ":")[1])
+			}
+			if strings.HasPrefix(line, "Type:") {
+				currentSlot.Type = strings.TrimSpace(strings.Split(line, ":")[1])
+			}
+			if strings.HasPrefix(line, "Speed:") {
+				currentSlot.Speed = strings.TrimSpace(strings.Split(line, ":")[1])
+			}
 		}
-		if strings.HasPrefix(line, "Form Factor:") {
-			currentSlot.FormFactor = strings.TrimSpace(strings.Split(line, ":")[1])
+		if currentSlot.Size != "" {
+			slots = append(slots, currentSlot)
 		}
-		if strings.HasPrefix(line, "Type:") {
-			currentSlot.Type = strings.TrimSpace(strings.Split(line, ":")[1])
-		}
-		if strings.HasPrefix(line, "Speed:") {
-			currentSlot.Speed = strings.TrimSpace(strings.Split(line, ":")[1])
-		}
-	}
-	if currentSlot.Size != "" {
-		slots = append(slots, currentSlot)
 	}
 
 	return helper.MemoryInfo{
@@ -314,4 +310,77 @@ func getMemoryInfo() helper.MemoryInfo {
 		FreeSize:  freeSize,
 		Slots:     slots,
 	}
+}
+
+// Helper function to read from sysfs or fallback to dmidecode command
+func readSysFileOrFallback(sysFilePath string, dmidecodeCmd string) string {
+	content, err := os.ReadFile(sysFilePath)
+	if err == nil {
+		return strings.TrimSpace(string(content))
+	}
+
+	// Fallback to using dmidecode
+	output, err := exec.Command("sh", "-c", dmidecodeCmd).Output()
+	if err != nil {
+		return "Unknown"
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// Helper function to get Storage information
+func getStorageInfo() []helper.StorageInfo {
+	var storages []helper.StorageInfo
+
+	// Use lsblk command to get block device information
+	output, err := exec.Command("lsblk", "-d", "-o", "NAME,MODEL,SIZE,ROTA,RM").Output()
+	if err != nil {
+		panic("Cannot execute lsblk command")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines[1:] {
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue
+		}
+
+		device := parts[0]
+		model := parts[1]
+		capacity := parts[2]
+
+		// Use df command to get used and available space, and file system type
+		dfOutput, err := exec.Command("df", "-hT", "/dev/"+device).Output()
+		if err != nil {
+			continue
+		}
+
+		dfLines := strings.Split(string(dfOutput), "\n")
+		if len(dfLines) < 2 {
+			continue
+		}
+
+		dfParts := strings.Fields(dfLines[1])
+		if len(dfParts) < 7 {
+			continue
+		}
+
+		filesystem := dfParts[1]
+		used := dfParts[2]
+		available := dfParts[3]
+		mountPoint := dfParts[6]
+
+		storages = append(storages, helper.StorageInfo{
+			Device:     device,
+			Model:      model,
+			Capacity:   capacity,
+			Used:       used,
+			Available:  available,
+			FileSystem: filesystem,
+			MountPoint: mountPoint,
+			ReadSpeed:  "Unknown", // Placeholder, as getting read speed dynamically is complex
+			WriteSpeed: "Unknown", // Placeholder, as getting write speed dynamically is complex
+		})
+	}
+
+	return storages
 }

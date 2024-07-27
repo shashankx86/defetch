@@ -15,6 +15,7 @@ type SysInfo struct {
 	GPU           GPUInfo
 	Motherboard   MotherboardInfo
 	Memory        MemoryInfo
+	Storage       []StorageInfo
 }
 
 type CPUInfo struct {
@@ -52,4 +53,16 @@ type MemorySlotInfo struct {
 	FormFactor string
 	Type       string
 	Speed      string
+}
+
+type StorageInfo struct {
+	Device     string
+	Model      string
+	Capacity   string
+	Used       string
+	Available  string
+	FileSystem string
+	MountPoint string
+	ReadSpeed  string
+	WriteSpeed string
 }

@@ -42,4 +42,17 @@ func main() {
 	fmt.Printf("Used Memory: %s\n", sysInfo.Memory.UsedSize)
 	fmt.Printf("Free Memory: %s\n", sysInfo.Memory.FreeSize)
 	fmt.Printf("Memory Slots: %v\n", sysInfo.Memory.Slots)
+
+	// Storage Information
+	for _, storage := range sysInfo.Storage {
+		fmt.Printf("Device: %s\n", storage.Device)
+		fmt.Printf("Model: %s\n", storage.Model)
+		fmt.Printf("Capacity: %s\n", storage.Capacity)
+		fmt.Printf("Used: %s\n", storage.Used)
+		fmt.Printf("Available: %s\n", storage.Available)
+		fmt.Printf("File System: %s\n", storage.FileSystem)
+		fmt.Printf("Mount Point: %s\n", storage.MountPoint)
+		fmt.Printf("Read Speed: %s\n", storage.ReadSpeed)
+		fmt.Printf("Write Speed: %s\n", storage.WriteSpeed)
+	}
 }
