@@ -2,11 +2,14 @@ package linux
 
 import (
 	"defetch/helper"
+	"fmt"
 	"os"
-	"os/exec"
 	"os/user"
 	"runtime"
 	"strings"
+
+	"github.com/shirou/gopsutil/host"
+	"golang.org/x/sys/unix"
 )
 
 func GetLinuxInfo() helper.SysInfo {
@@ -17,35 +20,71 @@ func GetLinuxInfo() helper.SysInfo {
 	currentUser, _ := user.Current()
 
 	// Operating System
-	osNameOutput, _ := exec.Command("lsb_release", "-ds").Output()
-	osName := strings.TrimSpace(string(osNameOutput))
-	osVersion, _ := exec.Command("lsb_release", "-rs").Output()
-	osCodename, _ := exec.Command("lsb_release", "-cs").Output()
+	platform, family, version, _ := host.PlatformInformation()
+	osName := platform
+	osVersion := version
+	osCodename := family
 
 	// Kernel Version
-	kernelVersion, _ := exec.Command("uname", "-r").Output()
+	var uname unix.Utsname
+	_ = unix.Uname(&uname)
+	kernelVersion := charsToString(uname.Release[:])
 
-	// Shell Name and Version
+	// Shell
 	shell := os.Getenv("SHELL")
-	shellVersionOutput, _ := exec.Command(shell, "--version").Output()
-	shellVersion := strings.SplitN(strings.TrimSpace(string(shellVersionOutput)), "\n", 2)[0]
 
 	// Architecture
 	architecture := runtime.GOARCH
 
 	// Uptime
-	uptimeOutput, _ := exec.Command("uptime", "-p").Output()
+	uptime, _ := host.Uptime()
+	uptimeStr := formatUptime(uptime)
 
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
 		OSName:        osName,
-		OSVersion:     strings.TrimSpace(string(osVersion)),
-		OSCodename:    strings.TrimSpace(string(osCodename)),
-		KernelVersion: strings.TrimSpace(string(kernelVersion)),
+		OSVersion:     osVersion,
+		OSCodename:    osCodename,
+		KernelVersion: kernelVersion,
 		Shell:         shell,
-		ShellVersion:  shellVersion,
+		ShellVersion:  "", // Not directly available
 		Architecture:  architecture,
-		Uptime:        strings.TrimSpace(string(uptimeOutput)),
+		Uptime:        uptimeStr,
 	}
+}
+
+// Helper function to convert Unix Utsname to a string
+func charsToString(ca []byte) string {
+	s := make([]byte, len(ca))
+	var lens int
+	for lens = 0; lens < len(ca); lens++ {
+		if ca[lens] == 0 {
+			break
+		}
+		s[lens] = ca[lens]
+	}
+	return string(s[:lens])
+}
+
+// Helper function to format uptime from seconds
+func formatUptime(uptime uint64) string {
+	days := uptime / (24 * 3600)
+	hours := (uptime % (24 * 3600)) / 3600
+	minutes := (uptime % 3600) / 60
+	return strings.TrimSpace(strings.Join([]string{
+		formatPlural(days, "day"),
+		formatPlural(hours, "hour"),
+		formatPlural(minutes, "minute"),
+	}, " "))
+}
+
+func formatPlural(value uint64, unit string) string {
+	if value == 0 {
+		return ""
+	}
+	if value == 1 {
+		return fmt.Sprintf("%d %s", value, unit)
+	}
+	return fmt.Sprintf("%d %ss", value, unit)
 }
