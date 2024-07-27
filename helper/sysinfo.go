@@ -16,6 +16,7 @@ type SysInfo struct {
 	Motherboard   MotherboardInfo
 	Memory        MemoryInfo
 	Storage       []StorageInfo
+	Network       []NetworkInfo
 }
 
 type CPUInfo struct {
@@ -65,4 +66,13 @@ type StorageInfo struct {
 	MountPoint string
 	ReadSpeed  string
 	WriteSpeed string
+}
+
+type NetworkInfo struct {
+	InterfaceName  string
+	IPAddress      string
+	MACAddress     string
+	Speed          string
+	Active         bool
+	DefaultGateway string
 }

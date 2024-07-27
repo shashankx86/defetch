@@ -59,6 +59,9 @@ func GetLinuxInfo() helper.SysInfo {
 	// Storage Information
 	storageInfo := getStorageInfo()
 
+	// Network Information
+	networkInfo := getNetworkInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -75,6 +78,7 @@ func GetLinuxInfo() helper.SysInfo {
 		Motherboard:   motherboardInfo,
 		Memory:        memoryInfo,
 		Storage:       storageInfo,
+		Network:       networkInfo,
 	}
 }
 
@@ -383,4 +387,62 @@ func getStorageInfo() []helper.StorageInfo {
 	}
 
 	return storages
+}
+
+// Helper function to get Network information
+func getNetworkInfo() []helper.NetworkInfo {
+	var networks []helper.NetworkInfo
+
+	// Use ip command to get network interfaces
+	output, err := exec.Command("ip", "-o", "addr", "show").Output()
+	if err != nil {
+		panic("Cannot execute ip command")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		fields := strings.Fields(line)
+		interfaceName := fields[1]
+		ipAddress := fields[3]
+
+		// Get MAC address
+		macOutput, err := exec.Command("cat", fmt.Sprintf("/sys/class/net/%s/address", interfaceName)).Output()
+		macAddress := "Unknown"
+		if err == nil {
+			macAddress = strings.TrimSpace(string(macOutput))
+		}
+
+		// Check if interface is active
+		active := strings.Contains(fields[len(fields)-1], "state UP")
+
+		// Get network speed (placeholder, as getting actual speed is complex)
+		speed := "Unknown"
+
+		// Get default gateway
+		gatewayOutput, err := exec.Command("ip", "route", "show", "default").Output()
+		defaultGateway := "Unknown"
+		if err == nil {
+			gatewayLines := strings.Split(string(gatewayOutput), "\n")
+			if len(gatewayLines) > 0 {
+				gatewayFields := strings.Fields(gatewayLines[0])
+				if len(gatewayFields) > 2 {
+					defaultGateway = gatewayFields[2]
+				}
+			}
+		}
+
+		networks = append(networks, helper.NetworkInfo{
+			InterfaceName:  interfaceName,
+			IPAddress:      ipAddress,
+			MACAddress:     macAddress,
+			Speed:          speed,
+			Active:         active,
+			DefaultGateway: defaultGateway,
+		})
+	}
+
+	return networks
 }

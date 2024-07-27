@@ -55,4 +55,14 @@ func main() {
 		fmt.Printf("Read Speed: %s\n", storage.ReadSpeed)
 		fmt.Printf("Write Speed: %s\n", storage.WriteSpeed)
 	}
+
+	// Network Information
+	for _, network := range sysInfo.Network {
+		fmt.Printf("Interface: %s\n", network.InterfaceName)
+		fmt.Printf("IP Address: %s\n", network.IPAddress)
+		fmt.Printf("MAC Address: %s\n", network.MACAddress)
+		fmt.Printf("Network Speed: %s\n", network.Speed)
+		fmt.Printf("Active: %t\n", network.Active)
+		fmt.Printf("Default Gateway: %s\n", network.DefaultGateway)
+	}
 }
