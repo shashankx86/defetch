@@ -47,6 +47,9 @@ func GetLinuxInfo() helper.SysInfo {
 	// CPU Information
 	cpuInfo := getCPUInfo()
 
+	// GPU Information
+	gpuInfo := getGPUInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -59,6 +62,7 @@ func GetLinuxInfo() helper.SysInfo {
 		Architecture:  architecture,
 		Uptime:        uptimeStr,
 		CPU:           cpuInfo,
+		GPU:           gpuInfo,
 	}
 }
 
@@ -179,5 +183,35 @@ func getCPUInfo() helper.CPUInfo {
 		Frequency:    frequency,
 		CacheSize:    int32(cacheSize),
 		Flags:        flags,
+	}
+}
+
+// Helper function to get GPU information
+func getGPUInfo() helper.GPUInfo {
+	var modelName, driverVersion, memorySize string
+
+	// Use lshw command to get GPU info
+	output, err := exec.Command("lshw", "-C", "display").Output()
+	if err != nil {
+		panic("Cannot execute lshw command")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "product:") {
+			modelName = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.Contains(line, "version:") {
+			driverVersion = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.Contains(line, "size:") && strings.Contains(line, "memory") {
+			memorySize = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+	}
+
+	return helper.GPUInfo{
+		ModelName:     modelName,
+		DriverVersion: driverVersion,
+		MemorySize:    memorySize,
 	}
 }

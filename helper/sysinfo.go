@@ -12,6 +12,7 @@ type SysInfo struct {
 	Architecture  string
 	Uptime        string
 	CPU           CPUInfo
+	GPU           GPUInfo
 }
 
 type CPUInfo struct {
@@ -22,4 +23,10 @@ type CPUInfo struct {
 	Frequency    float64
 	CacheSize    int32
 	Flags        string
+}
+
+type GPUInfo struct {
+	ModelName     string
+	DriverVersion string
+	MemorySize    string
 }

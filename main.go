@@ -25,4 +25,9 @@ func main() {
 	fmt.Printf("CPU Frequency: %.2f MHz\n", sysInfo.CPU.Frequency)
 	fmt.Printf("CPU Cache Size: %d KB\n", sysInfo.CPU.CacheSize)
 	fmt.Printf("CPU Flags: %s\n", sysInfo.CPU.Flags)
+
+	// GPU Information
+	fmt.Printf("GPU Model: %s\n", sysInfo.GPU.ModelName)
+	fmt.Printf("GPU Driver Version: %s\n", sysInfo.GPU.DriverVersion)
+	fmt.Printf("GPU Memory Size: %s\n", sysInfo.GPU.MemorySize)
 }
