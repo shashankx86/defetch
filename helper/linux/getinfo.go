@@ -33,7 +33,8 @@ func GetLinuxInfo() helper.SysInfo {
 
 	// Shell and Version
 	shell := os.Getenv("SHELL")
-	shellVersion := getShellVersion(shell)
+	shellBinary := getShellBinary(shell)
+	shellVersion := getShellVersion(shellBinary)
 
 	// Architecture
 	architecture := runtime.GOARCH
@@ -49,7 +50,7 @@ func GetLinuxInfo() helper.SysInfo {
 		OSVersion:     osVersion,
 		OSCodename:    osCodename,
 		KernelVersion: kernelVersion,
-		Shell:         shell,
+		Shell:         shellBinary,
 		ShellVersion:  shellVersion,
 		Architecture:  architecture,
 		Uptime:        uptimeStr,
@@ -91,13 +92,34 @@ func formatPlural(value uint64, unit string) string {
 	return fmt.Sprintf("%d %ss", value, unit)
 }
 
+// Helper function to get the shell binary name
+func getShellBinary(shellPath string) string {
+	parts := strings.Split(shellPath, "/")
+	return parts[len(parts)-1]
+}
+
 // Helper function to get the shell version
-func getShellVersion(shell string) string {
-	shellVersion := ""
-	if shell == "/bin/bash" || shell == "/usr/bin/bash" {
-		output, _ := exec.Command(shell, "--version").Output()
-		firstLine := strings.SplitN(strings.TrimSpace(string(output)), "\n", 2)[0]
-		shellVersion = strings.TrimSpace(firstLine)
+func getShellVersion(shellBinary string) string {
+	var output []byte
+	var err error
+
+	switch shellBinary {
+	case "bash":
+		output, err = exec.Command(shellBinary, "--version").Output()
+	case "zsh":
+		output, err = exec.Command(shellBinary, "--version").Output()
+	case "fish":
+		output, err = exec.Command(shellBinary, "--version").Output()
+	case "sh":
+		output, err = exec.Command(shellBinary, "--version").Output()
+	default:
+		return "Unknown shell or version not available"
 	}
-	return shellVersion
+
+	if err != nil {
+		return "Version not available"
+	}
+
+	firstLine := strings.SplitN(strings.TrimSpace(string(output)), "\n", 2)[0]
+	return strings.TrimSpace(firstLine)
 }
