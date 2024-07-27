@@ -11,4 +11,15 @@ type SysInfo struct {
 	ShellVersion  string
 	Architecture  string
 	Uptime        string
+	CPU           CPUInfo
+}
+
+type CPUInfo struct {
+	ModelName    string
+	Cores        int
+	Threads      int
+	Architecture string
+	Frequency    float64
+	CacheSize    int32
+	Flags        string
 }

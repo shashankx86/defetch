@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os/user"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/host"
@@ -43,6 +44,9 @@ func GetLinuxInfo() helper.SysInfo {
 	uptime, _ := host.Uptime()
 	uptimeStr := formatUptime(uptime)
 
+	// CPU Information
+	cpuInfo := getCPUInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -54,6 +58,7 @@ func GetLinuxInfo() helper.SysInfo {
 		ShellVersion:  shellVersion,
 		Architecture:  architecture,
 		Uptime:        uptimeStr,
+		CPU:           cpuInfo,
 	}
 }
 
@@ -122,4 +127,57 @@ func getShellVersion(shellBinary string) string {
 
 	firstLine := strings.SplitN(strings.TrimSpace(string(output)), "\n", 2)[0]
 	return strings.TrimSpace(firstLine)
+}
+
+// Helper function to get CPU information
+func getCPUInfo() helper.CPUInfo {
+	// Read from /proc/cpuinfo
+	output, err := os.ReadFile("/proc/cpuinfo")
+	if err != nil {
+		panic("Cannot read /proc/cpuinfo")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var modelName, flags string
+	var cores, cacheSize int
+	var frequency float64
+
+	for _, line := range lines {
+		if strings.Contains(line, "model name") && modelName == "" {
+			modelName = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+		if strings.Contains(line, "cpu cores") {
+			cores, _ = strconv.Atoi(strings.TrimSpace(strings.Split(line, ":")[1]))
+		}
+		if strings.Contains(line, "cache size") {
+			cacheSize, _ = strconv.Atoi(strings.TrimSpace(strings.Split(line, ":")[1]))
+		}
+		if strings.Contains(line, "cpu MHz") {
+			frequency, _ = strconv.ParseFloat(strings.TrimSpace(strings.Split(line, ":")[1]), 64)
+		}
+		if strings.Contains(line, "flags") && flags == "" {
+			flags = strings.TrimSpace(strings.Split(line, ":")[1])
+		}
+	}
+
+	// Check if model name is empty, fallback to /proc/device-tree/model for ARM systems
+	if modelName == "" {
+		deviceModel, err := os.ReadFile("/proc/device-tree/model")
+		if err == nil {
+			modelName = strings.TrimSpace(string(deviceModel))
+		}
+	}
+
+	// Get number of logical CPUs
+	threads := runtime.NumCPU()
+
+	return helper.CPUInfo{
+		ModelName:    modelName,
+		Cores:        cores,
+		Threads:      threads,
+		Architecture: runtime.GOARCH,
+		Frequency:    frequency,
+		CacheSize:    int32(cacheSize),
+		Flags:        flags,
+	}
 }
