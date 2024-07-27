@@ -4,6 +4,7 @@ import (
 	"defetch/helper"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"strings"
 )
@@ -11,6 +12,9 @@ import (
 func GetLinuxInfo() helper.SysInfo {
 	// Hostname
 	hostname, _ := os.Hostname()
+
+	// Current User
+	currentUser, _ := user.Current()
 
 	// Operating System
 	osNameOutput, _ := exec.Command("lsb_release", "-ds").Output()
@@ -21,6 +25,11 @@ func GetLinuxInfo() helper.SysInfo {
 	// Kernel Version
 	kernelVersion, _ := exec.Command("uname", "-r").Output()
 
+	// Shell Name and Version
+	shell := os.Getenv("SHELL")
+	shellVersionOutput, _ := exec.Command(shell, "--version").Output()
+	shellVersion := strings.SplitN(strings.TrimSpace(string(shellVersionOutput)), "\n", 2)[0]
+
 	// Architecture
 	architecture := runtime.GOARCH
 
@@ -29,10 +38,13 @@ func GetLinuxInfo() helper.SysInfo {
 
 	return helper.SysInfo{
 		Hostname:      hostname,
+		CurrentUser:   currentUser.Username,
 		OSName:        osName,
 		OSVersion:     strings.TrimSpace(string(osVersion)),
 		OSCodename:    strings.TrimSpace(string(osCodename)),
 		KernelVersion: strings.TrimSpace(string(kernelVersion)),
+		Shell:         shell,
+		ShellVersion:  shellVersion,
 		Architecture:  architecture,
 		Uptime:        strings.TrimSpace(string(uptimeOutput)),
 	}
