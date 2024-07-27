@@ -19,6 +19,7 @@ type SysInfo struct {
 	Network       []NetworkInfo
 	Battery       BatteryInfo
 	Peripherals   PeripheralInfo
+	Software      SoftwareInfo
 }
 
 type CPUInfo struct {
@@ -99,4 +100,10 @@ type USBDeviceInfo struct {
 	Vendor    string // Vendor name
 	ProductID string // Product ID
 	VendorID  string // Vendor ID
+}
+
+type SoftwareInfo struct {
+	OSDetails          string // Operating System details (Distro name or Windows edition)
+	DesktopEnvironment string // Desktop Environment name and version
+	WindowManager      string // Window Manager name and version
 }

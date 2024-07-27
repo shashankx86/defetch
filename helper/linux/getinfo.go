@@ -68,6 +68,9 @@ func GetLinuxInfo() helper.SysInfo {
 	// Peripherals Information
 	peripheralsInfo := getPeripheralsInfo()
 
+	// Software Information
+	softwareInfo := getSoftwareInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -87,6 +90,7 @@ func GetLinuxInfo() helper.SysInfo {
 		Network:       networkInfo,
 		Battery:       batteryInfo,
 		Peripherals:   peripheralsInfo,
+		Software:      softwareInfo,
 	}
 }
 
@@ -546,4 +550,46 @@ func getPeripheralsInfo() helper.PeripheralInfo {
 	}
 
 	return peripherals
+}
+
+// Helper function to get Software information
+func getSoftwareInfo() helper.SoftwareInfo {
+	osDetails := getOSDetails()
+	desktopEnvironment := getDesktopEnvironment()
+	windowManager := getWindowManager()
+
+	return helper.SoftwareInfo{
+		OSDetails:          osDetails,
+		DesktopEnvironment: desktopEnvironment,
+		WindowManager:      windowManager,
+	}
+}
+
+// Helper function to get OS details
+func getOSDetails() string {
+	platform, _, version, err := host.PlatformInformation()
+	if err != nil {
+		return "Unknown"
+	}
+	return fmt.Sprintf("%s %s", platform, version)
+}
+
+// Helper function to get Desktop Environment information
+func getDesktopEnvironment() string {
+	de := os.Getenv("XDG_CURRENT_DESKTOP")
+	version, err := exec.Command("sh", "-c", "echo $XDG_SESSION_DESKTOP").Output()
+	if err != nil {
+		return de
+	}
+	return fmt.Sprintf("%s %s", de, strings.TrimSpace(string(version)))
+}
+
+// Helper function to get Window Manager information
+func getWindowManager() string {
+	wm := os.Getenv("XDG_SESSION_DESKTOP")
+	version, err := exec.Command("sh", "-c", "wmctrl -m | grep 'Name|Version'").Output()
+	if err != nil {
+		return wm
+	}
+	return fmt.Sprintf("%s %s", wm, strings.TrimSpace(string(version)))
 }

@@ -93,4 +93,9 @@ func main() {
 	for _, printer := range sysInfo.Peripherals.PrinterDetails {
 		fmt.Printf("- %s\n", printer)
 	}
+
+	// Software Information
+	fmt.Printf("Operating System: %s\n", sysInfo.Software.OSDetails)
+	fmt.Printf("Desktop Environment: %s\n", sysInfo.Software.DesktopEnvironment)
+	fmt.Printf("Window Manager: %s\n", sysInfo.Software.WindowManager)
 }
