@@ -4,6 +4,7 @@ import (
 	"defetch/helper"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"runtime"
 	"strings"
@@ -30,8 +31,9 @@ func GetLinuxInfo() helper.SysInfo {
 	_ = unix.Uname(&uname)
 	kernelVersion := charsToString(uname.Release[:])
 
-	// Shell
+	// Shell and Version
 	shell := os.Getenv("SHELL")
+	shellVersion := getShellVersion(shell)
 
 	// Architecture
 	architecture := runtime.GOARCH
@@ -48,7 +50,7 @@ func GetLinuxInfo() helper.SysInfo {
 		OSCodename:    osCodename,
 		KernelVersion: kernelVersion,
 		Shell:         shell,
-		ShellVersion:  "", // Not directly available
+		ShellVersion:  shellVersion,
 		Architecture:  architecture,
 		Uptime:        uptimeStr,
 	}
@@ -87,4 +89,15 @@ func formatPlural(value uint64, unit string) string {
 		return fmt.Sprintf("%d %s", value, unit)
 	}
 	return fmt.Sprintf("%d %ss", value, unit)
+}
+
+// Helper function to get the shell version
+func getShellVersion(shell string) string {
+	shellVersion := ""
+	if shell == "/bin/bash" || shell == "/usr/bin/bash" {
+		output, _ := exec.Command(shell, "--version").Output()
+		firstLine := strings.SplitN(strings.TrimSpace(string(output)), "\n", 2)[0]
+		shellVersion = strings.TrimSpace(firstLine)
+	}
+	return shellVersion
 }
