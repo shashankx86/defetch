@@ -72,6 +72,9 @@ func GetLinuxInfo() helper.SysInfo {
 	// Software Information
 	softwareInfo := getSoftwareInfo()
 
+	// Performance Information
+	performanceInfo := getPerformanceInfo()
+
 	return helper.SysInfo{
 		Hostname:      hostname,
 		CurrentUser:   currentUser.Username,
@@ -92,6 +95,7 @@ func GetLinuxInfo() helper.SysInfo {
 		Battery:       batteryInfo,
 		Peripherals:   peripheralsInfo,
 		Software:      softwareInfo,
+		Performance:   performanceInfo,
 	}
 }
 
@@ -730,4 +734,93 @@ func getWindowManager() string {
 		return wm
 	}
 	return fmt.Sprintf("%s %s", wm, strings.TrimSpace(string(version)))
+}
+
+// Helper function to get system performance information
+func getPerformanceInfo() helper.PerformanceInfo {
+	cpuUsage, perCoreUsage := getCPUUsage()
+	memoryUsage, perAppMemoryUsage := getMemoryUsage()
+
+	return helper.PerformanceInfo{
+		CPUUsage:          cpuUsage,
+		PerCoreUsage:      perCoreUsage,
+		MemoryUsage:       memoryUsage,
+		PerAppMemoryUsage: perAppMemoryUsage,
+	}
+}
+
+// Helper function to get CPU usage information
+func getCPUUsage() (float64, []float64) {
+	// Use top command to get overall CPU usage and per-core usage
+	output, err := exec.Command("top", "-bn1").Output()
+	if err != nil {
+		panic("Cannot execute top command")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var cpuUsage float64
+	var perCoreUsage []float64
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "%Cpu(s):") {
+			// Overall CPU usage
+			parts := strings.Fields(line)
+			usage, _ := strconv.ParseFloat(parts[1], 64)
+			cpuUsage = usage
+		} else if strings.HasPrefix(line, "%Cpu") {
+			// Per-core usage
+			parts := strings.Fields(line)
+			usage, _ := strconv.ParseFloat(parts[1], 64)
+			perCoreUsage = append(perCoreUsage, usage)
+		}
+	}
+
+	return cpuUsage, perCoreUsage
+}
+
+// Helper function to get memory usage information
+func getMemoryUsage() (helper.MemoryUsageInfo, []helper.AppMemoryUsage) {
+	// Use free command to get overall memory usage
+	freeOutput, err := exec.Command("free", "-h").Output()
+	if err != nil {
+		panic("Cannot execute free command")
+	}
+
+	freeLines := strings.Split(string(freeOutput), "\n")
+	var memoryUsageInfo helper.MemoryUsageInfo
+	for _, line := range freeLines {
+		if strings.HasPrefix(line, "Mem:") {
+			parts := strings.Fields(line)
+			memoryUsageInfo.Total = parts[1]
+			memoryUsageInfo.TotalUsed = parts[2]
+			memoryUsageInfo.Free = parts[3]
+		}
+	}
+
+	// Use ps command to get per-application memory usage
+	psOutput, err := exec.Command("ps", "axo", "pid,comm,%mem", "--sort=-%mem").Output()
+	if err != nil {
+		panic("Cannot execute ps command")
+	}
+
+	psLines := strings.Split(string(psOutput), "\n")
+	var perAppMemoryUsage []helper.AppMemoryUsage
+	for _, line := range psLines[1:] { // Skip the header
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			continue
+		}
+
+		pid, _ := strconv.Atoi(fields[0])
+		name := fields[1]
+		memUsage, _ := strconv.ParseFloat(fields[2], 64)
+
+		perAppMemoryUsage = append(perAppMemoryUsage, helper.AppMemoryUsage{
+			PID:         pid,
+			Name:        name,
+			MemoryUsage: memUsage,
+		})
+	}
+
+	return memoryUsageInfo, perAppMemoryUsage
 }

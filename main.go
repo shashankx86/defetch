@@ -122,4 +122,21 @@ func main() {
 	for _, program := range sysInfo.Software.StartupPrograms {
 		fmt.Printf("  Name: %s, Command: %s\n", program.Name, program.Command)
 	}
+
+	// System Performance Information
+	fmt.Printf("\nOverall CPU Usage: %.2f%%\n", sysInfo.Performance.CPUUsage)
+	fmt.Println("Per-Core CPU Usage:")
+	for i, usage := range sysInfo.Performance.PerCoreUsage {
+		fmt.Printf("  Core %d: %.2f%%\n", i, usage)
+	}
+
+	fmt.Printf("\nTotal Memory Used: %s\n", sysInfo.Performance.MemoryUsage.TotalUsed)
+	fmt.Printf("Free Memory: %s\n", sysInfo.Performance.MemoryUsage.Free)
+	fmt.Printf("Total Memory: %s\n", sysInfo.Performance.MemoryUsage.Total)
+
+	fmt.Println("\nTop Applications by Memory Usage:")
+	for _, app := range sysInfo.Performance.PerAppMemoryUsage {
+		fmt.Printf("  PID: %d, Name: %s, Memory Usage: %.2f%%\n",
+			app.PID, app.Name, app.MemoryUsage)
+	}
 }

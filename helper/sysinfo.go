@@ -20,6 +20,7 @@ type SysInfo struct {
 	Battery       BatteryInfo
 	Peripherals   PeripheralInfo
 	Software      SoftwareInfo
+	Performance   PerformanceInfo
 }
 
 type CPUInfo struct {
@@ -130,4 +131,23 @@ type ProcessInfo struct {
 type StartupProgram struct {
 	Name    string // Program name
 	Command string // Command or path to the executable
+}
+
+type PerformanceInfo struct {
+	CPUUsage          float64          // Overall CPU usage percentage
+	PerCoreUsage      []float64        // CPU usage percentage per core
+	MemoryUsage       MemoryUsageInfo  // Memory usage information
+	PerAppMemoryUsage []AppMemoryUsage // Memory usage per application
+}
+
+type MemoryUsageInfo struct {
+	TotalUsed string // Total used memory
+	Free      string // Free memory
+	Total     string // Total memory
+}
+
+type AppMemoryUsage struct {
+	Name        string  // Application name
+	PID         int     // Process ID
+	MemoryUsage float64 // Memory usage percentage
 }
