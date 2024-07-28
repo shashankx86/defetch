@@ -66,12 +66,12 @@ func main() {
 		fmt.Printf("Default Gateway: %s\n", network.DefaultGateway)
 	}
 
-	// Battery Information
-	fmt.Printf("Battery Status: %s\n", sysInfo.Battery.Status)
-	fmt.Printf("Battery Capacity: %s\n", sysInfo.Battery.Capacity)
-	fmt.Printf("Battery Percentage: %s\n", sysInfo.Battery.Percentage)
-	fmt.Printf("Battery Manufacturer: %s\n", sysInfo.Battery.Manufacturer)
-	fmt.Printf("Battery Model: %s\n", sysInfo.Battery.Model)
+	// // Battery Information (TODO LATER)
+	// fmt.Printf("Battery Status: %s\n", sysInfo.Battery.Status)
+	// fmt.Printf("Battery Capacity: %s\n", sysInfo.Battery.Capacity)
+	// fmt.Printf("Battery Percentage: %s\n", sysInfo.Battery.Percentage)
+	// fmt.Printf("Battery Manufacturer: %s\n", sysInfo.Battery.Manufacturer)
+	// fmt.Printf("Battery Model: %s\n", sysInfo.Battery.Model)
 
 	// Peripherals Information
 	fmt.Println("Connected Devices:")
@@ -148,5 +148,24 @@ func main() {
 	for _, pkg := range sysInfo.PackageManagement.RecentlyInstalledPackages {
 		fmt.Printf("  Name: %s, Version: %s, Installed Date: %s\n",
 			pkg.Name, pkg.Version, pkg.InstalledDate)
+	}
+
+	// Other Information
+	fmt.Printf("\nPublic IP: %s\n", sysInfo.OtherInfo.PublicIP)
+	fmt.Printf("Timezone: %s\n", sysInfo.OtherInfo.Timezone)
+	fmt.Printf("Locale: %s\n", sysInfo.OtherInfo.Locale)
+	fmt.Printf("System Language: %s\n", sysInfo.OtherInfo.SystemLanguage)
+	fmt.Printf("CPU Temperature: %.2f°C\n", sysInfo.OtherInfo.Temperature.CPU)
+	fmt.Printf("GPU Temperature: %.2f°C\n", sysInfo.OtherInfo.Temperature.GPU)
+	fmt.Printf("Motherboard Temperature: %.2f°C\n", sysInfo.OtherInfo.Temperature.Motherboard)
+	fmt.Println("Screen Resolution:")
+	for _, screen := range sysInfo.OtherInfo.ScreenResolution {
+		fmt.Printf("  Model: %s, Resolution: %s, Refresh Rate: %d Hz\n",
+			screen.Model, screen.Resolution, screen.RefreshRate)
+	}
+	fmt.Println("Disk Partitions:")
+	for _, partition := range sysInfo.OtherInfo.DiskPartitions {
+		fmt.Printf("  Device: %s, Filesystem: %s, Mount Point: %s, Size: %s, Used: %s, Available: %s\n",
+			partition.Device, partition.Filesystem, partition.MountPoint, partition.Size, partition.Used, partition.Available)
 	}
 }

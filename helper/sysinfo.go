@@ -22,6 +22,7 @@ type SysInfo struct {
 	Software          SoftwareInfo
 	Performance       PerformanceInfo
 	PackageManagement PackageManagementInfo
+	OtherInfo         OtherInfo
 }
 
 type CPUInfo struct {
@@ -164,4 +165,35 @@ type PackageInfo struct {
 	Name          string // Package name
 	Version       string // Package version
 	InstalledDate string // Installation date
+}
+
+type OtherInfo struct {
+	PublicIP         string          // Public IP address
+	Timezone         string          // Timezone
+	Locale           string          // Locale
+	Temperature      TemperatureInfo // Temperature sensors information
+	SystemLanguage   string          // System language
+	ScreenResolution []ScreenInfo    // Screen resolution and monitor details
+	DiskPartitions   []PartitionInfo // Disk partitions
+}
+
+type TemperatureInfo struct {
+	CPU         float64 // CPU temperature
+	GPU         float64 // GPU temperature
+	Motherboard float64 // Motherboard temperature
+}
+
+type ScreenInfo struct {
+	Model       string // Monitor model
+	Resolution  string // Resolution
+	RefreshRate int    // Refresh rate in Hz
+}
+
+type PartitionInfo struct {
+	Device     string // Partition device name
+	MountPoint string // Mount point
+	Filesystem string // Filesystem type
+	Size       string // Partition size
+	Used       string // Used space
+	Available  string // Available space
 }

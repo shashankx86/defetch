@@ -64,7 +64,7 @@ func GetLinuxInfo() helper.SysInfo {
 	networkInfo := getNetworkInfo()
 
 	// Battery Information
-	batteryInfo := getBatteryInfo()
+	// batteryInfo := getBatteryInfo()
 
 	// Peripherals Information
 	peripheralsInfo := getPeripheralsInfo()
@@ -77,6 +77,9 @@ func GetLinuxInfo() helper.SysInfo {
 
 	// Package Management Information
 	packageManagementInfo := getPackageManagementInfo()
+
+	// Other Information
+	otherInfo := getOtherInfo()
 
 	return helper.SysInfo{
 		Hostname:          hostname,
@@ -95,11 +98,11 @@ func GetLinuxInfo() helper.SysInfo {
 		Memory:            memoryInfo,
 		Storage:           storageInfo,
 		Network:           networkInfo,
-		Battery:           batteryInfo,
 		Peripherals:       peripheralsInfo,
 		Software:          softwareInfo,
 		Performance:       performanceInfo,
 		PackageManagement: packageManagementInfo,
+		OtherInfo:         otherInfo,
 	}
 }
 
@@ -468,46 +471,47 @@ func getNetworkInfo() []helper.NetworkInfo {
 	return networks
 }
 
+// NOTE FOR ME: /sys/class/power_supply/BAT0/ NOT WORKING, TODO LATER
 // Helper function to get Battery information
-func getBatteryInfo() helper.BatteryInfo {
-	// Placeholder values, actual implementation will depend on available battery data source
-	status := "Unknown"
-	capacity := "Unknown"
-	percentage := "Unknown"
-	manufacturer := "Unknown"
-	model := "Unknown"
+// func getBatteryInfo() helper.BatteryInfo {
+// 	// Placeholder values, actual implementation will depend on available battery data source
+// 	status := "Unknown"
+// 	capacity := "Unknown"
+// 	percentage := "Unknown"
+// 	manufacturer := "Unknown"
+// 	model := "Unknown"
 
-	// Retrieve battery information from system files (example: /sys/class/power_supply/BAT0/)
-	batteryPath := "/sys/class/power_supply/BAT0/"
-	statusBytes, err := os.ReadFile(batteryPath + "status")
-	if err == nil {
-		status = strings.TrimSpace(string(statusBytes))
-	}
-	capacityBytes, err := os.ReadFile(batteryPath + "energy_full")
-	if err == nil {
-		capacity = strings.TrimSpace(string(capacityBytes)) + " µWh"
-	}
-	percentageBytes, err := os.ReadFile(batteryPath + "capacity")
-	if err == nil {
-		percentage = strings.TrimSpace(string(percentageBytes)) + "%"
-	}
-	manufacturerBytes, err := os.ReadFile(batteryPath + "manufacturer")
-	if err == nil {
-		manufacturer = strings.TrimSpace(string(manufacturerBytes))
-	}
-	modelBytes, err := os.ReadFile(batteryPath + "model_name")
-	if err == nil {
-		model = strings.TrimSpace(string(modelBytes))
-	}
+// 	// Retrieve battery information from system files (example: /sys/class/power_supply/BAT0/)
+// 	batteryPath := "/sys/class/power_supply/BAT0/"
+// 	statusBytes, err := os.ReadFile(batteryPath + "status")
+// 	if err == nil {
+// 		status = strings.TrimSpace(string(statusBytes))
+// 	}
+// 	capacityBytes, err := os.ReadFile(batteryPath + "energy_full")
+// 	if err == nil {
+// 		capacity = strings.TrimSpace(string(capacityBytes)) + " µWh"
+// 	}
+// 	percentageBytes, err := os.ReadFile(batteryPath + "capacity")
+// 	if err == nil {
+// 		percentage = strings.TrimSpace(string(percentageBytes)) + "%"
+// 	}
+// 	manufacturerBytes, err := os.ReadFile(batteryPath + "manufacturer")
+// 	if err == nil {
+// 		manufacturer = strings.TrimSpace(string(manufacturerBytes))
+// 	}
+// 	modelBytes, err := os.ReadFile(batteryPath + "model_name")
+// 	if err == nil {
+// 		model = strings.TrimSpace(string(modelBytes))
+// 	}
 
-	return helper.BatteryInfo{
-		Status:       status,
-		Capacity:     capacity,
-		Percentage:   percentage,
-		Manufacturer: manufacturer,
-		Model:        model,
-	}
-}
+// 	return helper.BatteryInfo{
+// 		Status:       status,
+// 		Capacity:     capacity,
+// 		Percentage:   percentage,
+// 		Manufacturer: manufacturer,
+// 		Model:        model,
+// 	}
+// }
 
 // Helper function to get Peripherals information
 func getPeripheralsInfo() helper.PeripheralInfo {
@@ -918,4 +922,141 @@ func getRecentlyInstalledPackages() []helper.PackageInfo {
 	}
 
 	return packages
+}
+
+// Helper function to get other information
+func getOtherInfo() helper.OtherInfo {
+	publicIP := getPublicIP()
+	timezone := getTimezone()
+	locale := getLocale()
+	temperature := getTemperature()
+	systemLanguage := getSystemLanguage()
+	screenResolution := getScreenResolution()
+	diskPartitions := getDiskPartitions()
+
+	return helper.OtherInfo{
+		PublicIP:         publicIP,
+		Timezone:         timezone,
+		Locale:           locale,
+		Temperature:      temperature,
+		SystemLanguage:   systemLanguage,
+		ScreenResolution: screenResolution,
+		DiskPartitions:   diskPartitions,
+	}
+}
+
+// Function to get public IP address
+func getPublicIP() string {
+	output, err := exec.Command("curl", "-s", "ifconfig.me").Output()
+	if err != nil {
+		return "Unavailable"
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// Function to get timezone
+func getTimezone() string {
+	output, err := exec.Command("timedatectl", "show", "-p", "Timezone").Output()
+	if err != nil {
+		return "Unavailable"
+	}
+	return strings.TrimSpace(strings.Split(string(output), "=")[1])
+}
+
+// Function to get locale
+func getLocale() string {
+	output, err := exec.Command("locale", "|", "grep", "LANG=").Output()
+	if err != nil {
+		return "Unavailable"
+	}
+	return strings.TrimSpace(strings.Split(string(output), "=")[1])
+}
+
+// Function to get temperature readings
+func getTemperature() helper.TemperatureInfo {
+	// Example implementation using lm-sensors
+	output, err := exec.Command("sensors").Output()
+	if err != nil {
+		return helper.TemperatureInfo{}
+	}
+
+	var cpuTemp, gpuTemp, moboTemp float64
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "Core 0:") {
+			fmt.Sscanf(line, "Core 0: +%f°C", &cpuTemp)
+		}
+		if strings.Contains(line, "temp1:") && strings.Contains(line, "GPU") {
+			fmt.Sscanf(line, "temp1: +%f°C", &gpuTemp)
+		}
+		if strings.Contains(line, "temp1:") && strings.Contains(line, "MB") {
+			fmt.Sscanf(line, "temp1: +%f°C", &moboTemp)
+		}
+	}
+
+	return helper.TemperatureInfo{
+		CPU:         cpuTemp,
+		GPU:         gpuTemp,
+		Motherboard: moboTemp,
+	}
+}
+
+// Function to get system language
+func getSystemLanguage() string {
+	output, err := exec.Command("locale", "|", "grep", "LANG=").Output()
+	if err != nil {
+		return "Unavailable"
+	}
+	return strings.TrimSpace(strings.Split(string(output), "=")[1])
+}
+
+// Function to get screen resolution and monitor details
+func getScreenResolution() []helper.ScreenInfo {
+	var screens []helper.ScreenInfo
+	output, err := exec.Command("xrandr", "--query").Output()
+	if err != nil {
+		return screens
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, " connected") {
+			parts := strings.Fields(line)
+			model := parts[0]
+			resolution := parts[2]
+			var refreshRate int
+			fmt.Sscanf(parts[4], "%d", &refreshRate)
+			screens = append(screens, helper.ScreenInfo{
+				Model:       model,
+				Resolution:  resolution,
+				RefreshRate: refreshRate,
+			})
+		}
+	}
+	return screens
+}
+
+// Function to get disk partitions information
+func getDiskPartitions() []helper.PartitionInfo {
+	var partitions []helper.PartitionInfo
+	output, err := exec.Command("lsblk", "-o", "NAME,FSTYPE,MOUNTPOINT,SIZE,USED,AVAIL").Output()
+	if err != nil {
+		return partitions
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines[1:] {
+		parts := strings.Fields(line)
+		if len(parts) >= 6 {
+			partitions = append(partitions, helper.PartitionInfo{
+				Device:     parts[0],
+				Filesystem: parts[1],
+				MountPoint: parts[2],
+				Size:       parts[3],
+				Used:       parts[4],
+				Available:  parts[5],
+			})
+		}
+	}
+	return partitions
 }
