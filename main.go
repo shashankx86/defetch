@@ -139,4 +139,14 @@ func main() {
 		fmt.Printf("  PID: %d, Name: %s, Memory Usage: %.2f%%\n",
 			app.PID, app.Name, app.MemoryUsage)
 	}
+
+	// Package Management Information
+	fmt.Printf("\nNumber of Installed Packages: %d\n", sysInfo.PackageManagement.PackageCount)
+	fmt.Printf("Number of Available Updates: %d\n", sysInfo.PackageManagement.AvailableUpdates)
+	fmt.Printf("Used Package Managers: %v\n", sysInfo.PackageManagement.PackageManagers)
+	fmt.Println("Recently Installed Packages:")
+	for _, pkg := range sysInfo.PackageManagement.RecentlyInstalledPackages {
+		fmt.Printf("  Name: %s, Version: %s, Installed Date: %s\n",
+			pkg.Name, pkg.Version, pkg.InstalledDate)
+	}
 }

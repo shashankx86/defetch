@@ -75,27 +75,31 @@ func GetLinuxInfo() helper.SysInfo {
 	// Performance Information
 	performanceInfo := getPerformanceInfo()
 
+	// Package Management Information
+	packageManagementInfo := getPackageManagementInfo()
+
 	return helper.SysInfo{
-		Hostname:      hostname,
-		CurrentUser:   currentUser.Username,
-		OSName:        osName,
-		OSVersion:     osVersion,
-		OSCodename:    osCodename,
-		KernelVersion: kernelVersion,
-		Shell:         shellBinary,
-		ShellVersion:  shellVersion,
-		Architecture:  architecture,
-		Uptime:        uptimeStr,
-		CPU:           cpuInfo,
-		GPU:           gpuInfo,
-		Motherboard:   motherboardInfo,
-		Memory:        memoryInfo,
-		Storage:       storageInfo,
-		Network:       networkInfo,
-		Battery:       batteryInfo,
-		Peripherals:   peripheralsInfo,
-		Software:      softwareInfo,
-		Performance:   performanceInfo,
+		Hostname:          hostname,
+		CurrentUser:       currentUser.Username,
+		OSName:            osName,
+		OSVersion:         osVersion,
+		OSCodename:        osCodename,
+		KernelVersion:     kernelVersion,
+		Shell:             shellBinary,
+		ShellVersion:      shellVersion,
+		Architecture:      architecture,
+		Uptime:            uptimeStr,
+		CPU:               cpuInfo,
+		GPU:               gpuInfo,
+		Motherboard:       motherboardInfo,
+		Memory:            memoryInfo,
+		Storage:           storageInfo,
+		Network:           networkInfo,
+		Battery:           batteryInfo,
+		Peripherals:       peripheralsInfo,
+		Software:          softwareInfo,
+		Performance:       performanceInfo,
+		PackageManagement: packageManagementInfo,
 	}
 }
 
@@ -823,4 +827,95 @@ func getMemoryUsage() (helper.MemoryUsageInfo, []helper.AppMemoryUsage) {
 	}
 
 	return memoryUsageInfo, perAppMemoryUsage
+}
+
+// Helper function to get package management information
+func getPackageManagementInfo() helper.PackageManagementInfo {
+	packageCount := getPackageCount()
+	availableUpdates := getAvailableUpdates()
+	packageManagers := getPackageManagers()
+	recentlyInstalledPackages := getRecentlyInstalledPackages()
+
+	return helper.PackageManagementInfo{
+		PackageCount:              packageCount,
+		AvailableUpdates:          availableUpdates,
+		PackageManagers:           packageManagers,
+		RecentlyInstalledPackages: recentlyInstalledPackages,
+	}
+}
+
+// Function to get the number of installed packages
+func getPackageCount() int {
+	output, err := exec.Command("dpkg-query", "-f", ".", "-W").Output()
+	if err != nil {
+		panic("Cannot execute dpkg-query command")
+	}
+	return len(output)
+}
+
+// Function to get the number of available updates
+func getAvailableUpdates() int {
+	output, err := exec.Command("apt", "list", "--upgradable").Output()
+	if err != nil {
+		panic("Cannot execute apt command to check for updates")
+	}
+	lines := strings.Split(string(output), "\n")
+	return len(lines) - 1 // Exclude header line
+}
+
+// Function to list the used package managers
+func getPackageManagers() []string {
+	// List common package managers on Linux systems
+	packageManagers := []string{}
+	if _, err := exec.LookPath("apt"); err == nil {
+		packageManagers = append(packageManagers, "apt")
+	}
+	if _, err := exec.LookPath("dnf"); err == nil {
+		packageManagers = append(packageManagers, "dnf")
+	}
+	if _, err := exec.LookPath("pacman"); err == nil {
+		packageManagers = append(packageManagers, "pacman")
+	}
+	if _, err := exec.LookPath("yum"); err == nil {
+		packageManagers = append(packageManagers, "yum")
+	}
+	if _, err := exec.LookPath("zypper"); err == nil {
+		packageManagers = append(packageManagers, "zypper")
+	}
+	return packageManagers
+}
+
+// Helper function to get recently installed packages
+func getRecentlyInstalledPackages() []helper.PackageInfo {
+	logFiles := []string{"/var/log/dpkg.log", "/var/log/dpkg.log.1"}
+	var packages []helper.PackageInfo
+
+	for _, logFile := range logFiles {
+		if _, err := os.Stat(logFile); os.IsNotExist(err) {
+			continue // Skip if the log file does not exist
+		}
+
+		output, err := exec.Command("zgrep", "install ", logFile).Output()
+		if err != nil {
+			fmt.Printf("Warning: Cannot read dpkg logs from %s: %v\n", logFile, err)
+			continue
+		}
+
+		lines := strings.Split(string(output), "\n")
+		for _, line := range lines {
+			if len(line) == 0 {
+				continue
+			}
+			parts := strings.Fields(line)
+			if len(parts) >= 4 {
+				packages = append(packages, helper.PackageInfo{
+					Name:          parts[3],
+					Version:       parts[4],
+					InstalledDate: fmt.Sprintf("%s %s", parts[0], parts[1]),
+				})
+			}
+		}
+	}
+
+	return packages
 }

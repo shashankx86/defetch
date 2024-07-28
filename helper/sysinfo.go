@@ -1,26 +1,27 @@
 package helper
 
 type SysInfo struct {
-	Hostname      string
-	CurrentUser   string
-	OSName        string
-	OSVersion     string
-	OSCodename    string
-	KernelVersion string
-	Shell         string
-	ShellVersion  string
-	Architecture  string
-	Uptime        string
-	CPU           CPUInfo
-	GPU           GPUInfo
-	Motherboard   MotherboardInfo
-	Memory        MemoryInfo
-	Storage       []StorageInfo
-	Network       []NetworkInfo
-	Battery       BatteryInfo
-	Peripherals   PeripheralInfo
-	Software      SoftwareInfo
-	Performance   PerformanceInfo
+	Hostname          string
+	CurrentUser       string
+	OSName            string
+	OSVersion         string
+	OSCodename        string
+	KernelVersion     string
+	Shell             string
+	ShellVersion      string
+	Architecture      string
+	Uptime            string
+	CPU               CPUInfo
+	GPU               GPUInfo
+	Motherboard       MotherboardInfo
+	Memory            MemoryInfo
+	Storage           []StorageInfo
+	Network           []NetworkInfo
+	Battery           BatteryInfo
+	Peripherals       PeripheralInfo
+	Software          SoftwareInfo
+	Performance       PerformanceInfo
+	PackageManagement PackageManagementInfo
 }
 
 type CPUInfo struct {
@@ -150,4 +151,17 @@ type AppMemoryUsage struct {
 	Name        string  // Application name
 	PID         int     // Process ID
 	MemoryUsage float64 // Memory usage percentage
+}
+
+type PackageManagementInfo struct {
+	PackageCount              int           // Number of installed packages (Linux) or programs (Windows)
+	AvailableUpdates          int           // Number of available updates (Linux)
+	PackageManagers           []string      // List of used package managers (Linux)
+	RecentlyInstalledPackages []PackageInfo // List of recently installed packages (Linux)
+}
+
+type PackageInfo struct {
+	Name          string // Package name
+	Version       string // Package version
+	InstalledDate string // Installation date
 }
