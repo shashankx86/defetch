@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -561,6 +562,9 @@ func getSoftwareInfo() helper.SoftwareInfo {
 	gtkTheme := getGTKTheme()
 	iconsTheme := getIconsTheme()
 	font := getFont()
+	browsers := getInstalledBrowsers()
+	processes := getRunningProcesses()
+	startupPrograms := getStartupPrograms()
 
 	return helper.SoftwareInfo{
 		OSDetails:          osDetails,
@@ -570,7 +574,96 @@ func getSoftwareInfo() helper.SoftwareInfo {
 		GTKTheme:           gtkTheme,
 		IconsTheme:         iconsTheme,
 		Font:               font,
+		Browser:            browsers,
+		RunningProcesses:   processes,
+		StartupPrograms:    startupPrograms,
 	}
+}
+
+// Helper function to get installed browsers and their versions
+func getInstalledBrowsers() []helper.BrowserInfo {
+	// List of known browser executables (add more as needed)
+	browsers := []string{"firefox", "google-chrome", "chromium", "brave", "opera"}
+
+	var browserInfos []helper.BrowserInfo
+	for _, browser := range browsers {
+		output, err := exec.Command(browser, "--version").Output()
+		if err == nil {
+			versionInfo := strings.TrimSpace(string(output))
+			parts := strings.Fields(versionInfo)
+			if len(parts) > 1 {
+				browserInfos = append(browserInfos, helper.BrowserInfo{Name: parts[0], Version: parts[1]})
+			}
+		}
+	}
+
+	return browserInfos
+}
+
+// Helper function to get running processes information
+func getRunningProcesses() []helper.ProcessInfo {
+	// Use ps command to get processes info
+	output, err := exec.Command("ps", "axo", "pid,comm,pcpu,pmem", "--sort=-pcpu").Output()
+	if err != nil {
+		panic("Cannot execute ps command")
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var processes []helper.ProcessInfo
+	for _, line := range lines[1:] { // Skip the header
+		fields := strings.Fields(line)
+		if len(fields) < 4 {
+			continue
+		}
+
+		pid, _ := strconv.Atoi(fields[0])
+		name := fields[1]
+		cpuUsage, _ := strconv.ParseFloat(fields[2], 64)
+		memUsage, _ := strconv.ParseFloat(fields[3], 64)
+
+		processes = append(processes, helper.ProcessInfo{
+			PID:         pid,
+			Name:        name,
+			CPUUsage:    cpuUsage,
+			MemoryUsage: memUsage,
+		})
+	}
+
+	return processes
+}
+
+// Helper function to get startup programs
+func getStartupPrograms() []helper.StartupProgram {
+	// This implementation will vary based on the desktop environment and OS
+
+	// Example for .desktop files in autostart directory
+	autostartDir := filepath.Join(os.Getenv("HOME"), ".config", "autostart")
+	files, err := os.ReadDir(autostartDir)
+	if err != nil {
+		return nil
+	}
+
+	var startupPrograms []helper.StartupProgram
+	for _, file := range files {
+		if filepath.Ext(file.Name()) == ".desktop" {
+			// Reading .desktop file content
+			content, err := os.ReadFile(filepath.Join(autostartDir, file.Name()))
+			if err == nil {
+				var name, command string
+				for _, line := range strings.Split(string(content), "\n") {
+					if strings.HasPrefix(line, "Name=") {
+						name = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+					}
+					if strings.HasPrefix(line, "Exec=") {
+						command = strings.TrimSpace(strings.TrimPrefix(line, "Exec="))
+					}
+				}
+				startupPrograms = append(startupPrograms, helper.StartupProgram{Name: name, Command: command})
+			}
+		}
+	}
+
+	return startupPrograms
 }
 
 // Helper function to get Window Manager theme

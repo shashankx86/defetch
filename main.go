@@ -102,4 +102,24 @@ func main() {
 	fmt.Printf("GTK Theme: %s\n", sysInfo.Software.GTKTheme)
 	fmt.Printf("Icons Theme: %s\n", sysInfo.Software.IconsTheme)
 	fmt.Printf("Font: %s\n", sysInfo.Software.Font)
+
+	// Browser Information
+	fmt.Println("Browsers:")
+	for _, browser := range sysInfo.Software.Browser {
+		fmt.Printf("  %s: %s\n", browser.Name, browser.Version)
+	}
+
+	// Running Processes Information
+	fmt.Printf("\nNumber of Running Processes: %d\n", len(sysInfo.Software.RunningProcesses))
+	fmt.Println("Top Processes by CPU Usage:")
+	for _, process := range sysInfo.Software.RunningProcesses {
+		fmt.Printf("  PID: %d, Name: %s, CPU Usage: %.2f%%, Memory Usage: %.2f%%\n",
+			process.PID, process.Name, process.CPUUsage, process.MemoryUsage)
+	}
+
+	// Startup Programs Information
+	fmt.Println("\nStartup Programs:")
+	for _, program := range sysInfo.Software.StartupPrograms {
+		fmt.Printf("  Name: %s, Command: %s\n", program.Name, program.Command)
+	}
 }

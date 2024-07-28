@@ -103,11 +103,31 @@ type USBDeviceInfo struct {
 }
 
 type SoftwareInfo struct {
-	OSDetails          string // Operating System details (Distro name or Windows edition)
-	DesktopEnvironment string // Desktop Environment name and version
-	WindowManager      string // Window Manager name and version
-	WMTheme            string // Window Manager theme
-	GTKTheme           string // GTK theme
-	IconsTheme         string // Icons theme
-	Font               string // Font used in the system
+	OSDetails          string           // Operating System details (Distro name or Windows edition)
+	DesktopEnvironment string           // Desktop Environment name and version
+	WindowManager      string           // Window Manager name and version
+	WMTheme            string           // Window Manager theme
+	GTKTheme           string           // GTK theme
+	IconsTheme         string           // Icons theme
+	Font               string           // Font used in the system
+	Browser            []BrowserInfo    // List of installed browsers and their versions
+	RunningProcesses   []ProcessInfo    // Information on running processes
+	StartupPrograms    []StartupProgram // List of programs that run on startup
+}
+
+type BrowserInfo struct {
+	Name    string // Browser name
+	Version string // Browser version
+}
+
+type ProcessInfo struct {
+	PID         int     // Process ID
+	Name        string  // Process name
+	CPUUsage    float64 // CPU usage percentage
+	MemoryUsage float64 // Memory usage percentage
+}
+
+type StartupProgram struct {
+	Name    string // Program name
+	Command string // Command or path to the executable
 }
