@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/sys v0.22.0
+	golang.org/x/sys v0.23.0
 )
 
 require (
