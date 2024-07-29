@@ -186,7 +186,23 @@ func displaySystemInfo(sysInfo interface{}) {
 				partition.Device, partition.Filesystem, partition.MountPoint, partition.Size, partition.Used, partition.Available)
 		}
 	} else if info, ok := sysInfo.(windows.SysInfo); ok {
-		// Display Windows system information
-		// [Code to display Windows-specific system information]
+		// Retrieve and print Windows system information
+		sysInfo := windows.GetWindowsInfo()
+
+		fmt.Printf("Hostname: %s\n", sysInfo.Hostname)
+		fmt.Printf("Current User: %s\n", sysInfo.CurrentUser)
+		fmt.Printf("OS Name: %s\n", sysInfo.OSName)
+		fmt.Printf("OS Version: %s\n", sysInfo.OSVersion)
+		fmt.Printf("Manufacturer: %s\n", sysInfo.Manufacturer)
+		fmt.Printf("Model: %s\n", sysInfo.Model)
+		fmt.Printf("Kernel Version: %s\n", sysInfo.OtherInfo.KernelVersion)
+		fmt.Printf("System Uptime: %s\n", sysInfo.OtherInfo.Uptime)
+		fmt.Printf("Installed Packages: %d\n", sysInfo.PackageManagement.PackageCount)
+		fmt.Printf("Shell Name: %s\n", sysInfo.Software.ShellName)
+		fmt.Printf("Shell Version: %s\n", sysInfo.Software.ShellVersion)
+		fmt.Printf("Primary Display Resolution: %s\n", sysInfo.OtherInfo.ScreenResolution[0].Resolution)
+		fmt.Printf("Desktop Environment: %s\n", sysInfo.Software.DesktopEnvironment)
+		fmt.Printf("Window Manager: %s\n", sysInfo.Software.WindowManager)
+		fmt.Printf("Current Theme: %s\n", sysInfo.OtherInfo.CurrentTheme)
 	}
 }
